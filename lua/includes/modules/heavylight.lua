@@ -1,7 +1,6 @@
 if SERVER then
 	-- what are you doing here?
-	AddCSLuaFile()
-	print("HEY!")
+	AddCSLuaFile() -- I guess?
 	return
 end
 
@@ -20,6 +19,6 @@ module("heavylight", package.seeall)
 --	* "basic" - RGB888 render target. This is the only type to support anti-aliasing (https://github.com/Facepunch/garrysmod-issues/issues/2106)
 --	* "int" - RGBA16161616 render target.
 --	* "float" - RGBA16161616F render target. This is the default value.
--- As a table, it must be an array with two ITexture elements. The first element is the textured to be rendered into in tick_func, and the second is the texture to hold the blend of all rendered ticks thus far.
+--	As a table, it must be an array with two ITexture elements. The first element is the textured to be rendered into in tick_func, and the second is the texture to hold the blend of all rendered ticks thus far.
 function StartPoster(poster_size, poster_split, new_section_func, tick_func, render_target, blend_mode, finish_func)
 end
