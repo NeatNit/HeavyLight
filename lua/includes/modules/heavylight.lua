@@ -5,40 +5,25 @@ assert(CLIENT, "Tried to include a client module (heavylight) in a server file!"
 do
 	local RTs = {}
 
-	function GetRT(rttype, index)
-		RTs[rttype] = RTs[rttype] or {}
+	function GetRT(rttype, index, width, height)
+		local w, h = width or ScrW(), height or ScrH()
+		RTs[rttype]       = RTs[rttype] or {}
+		RTs[rttype][w]    = RTs[rttype][w] or {}
+		RTs[rttype][w][h] = RTs[rttype][w][h] or {}
 
-		if not RTs[rttype][index] then
-			RTs[rttype][index] = GetRenderTargetEx(
-				"HeavyLight" .. rttype .. index,	-- Name
-				ScrW(),	-- Width
-				ScrH(),	-- Height
+		if not RTs[rttype][w][h][index] then
+			RTs[rttype][w][h][index] = GetRenderTargetEx(
+				"HeavyLight" .. w .. "_" .. h .. "_" .. rttype .. tostring(index),	-- Name
+				w,	-- Width
+				h,	-- Height
 				RT_SIZE_DEFAULT,	-- Size Mode, does this even affect anything?
 				MATERIAL_RT_DEPTH_SHARED,	-- Depth Mode, what is this?
-				nil,	-- Texture Flags, shit documentation
+				nil,	-- Texture Flags, shit documentation, does jack shit
 				0,	-- RT flags
 				_G["IMAGE_FORMAT_" .. rttype])	-- Image Format
 		end
 
-		return RTs[rttype][index]
-	end
-end
-
-local function GetAddRT(rttype, index)
-	rttype = rttype or "basic"
-	if isstring(rttype) then
-		if		rttype == "basic" then
-			index = math.floor((index or 0) / 257)
-			return RTs.RGBA16161616[index]
-		elseif	rttype == "int" then
-			-- RGBA16161616
-		elseif	rttype == "float" then
-			-- RGBA16161616F
-		end
-	elseif index >= 0 then
-		return rttype.Render
-	else
-		return rttype.Blend
+		return RTs[rttype][w][h][index]
 	end
 end
 
@@ -80,24 +65,53 @@ local function CheckValidity(renderdef, errorlevel)
 	end
 end
 
+
+local function GetAddRT(rttype, index, width, height)
+	rttype = rttype or "basic"
+	if isstring(rttype) then
+		if		rttype == "basic" then
+			index = math.floor((index or 0) / 257)
+			return render.GetRenderTarget()
+		elseif	rttype == "int" then
+			-- RGBA16161616
+		elseif	rttype == "float" then
+			-- RGBA16161616F
+		end
+	elseif index >= 0 then
+		return rttype.Render
+	else
+		return rttype.Blend
+	end
+end
+
 function Render(renderdef, drawprogress)
 	CheckValidity(renderdef)
+
+	if renderdef.Start then
+		reunderdef.Start()
+	end
+
 	GetRT()
 end
 
-local posterdata = {}
---- Starts a HeavyLight poster render.
--- @param renderdef A table of the structure defined someplace else. Give me a break okay?
--- @param int postersize The first parameter of the 'poster' console command.
--- @param[opt] int postersplit The second parameter of the 'poster' console command.
-function StartPoster(renderdef, postersize, postersplit)
-	CheckValidity(renderdef)
-	assert(tonumber(postersize), "bad argument #2 to StartPoster (number expected, got " .. type(postersize) .. ")")
+--[[-------------------------------------------------------------------------
+ Poster
+ ---------------------------------------------------------------------------]]
+do
+	local posterdata = {}
+	--- Starts a HeavyLight poster render.
+	-- @param renderdef A table of the structure defined someplace else. Give me a break okay?
+	-- @param int postersize The first parameter of the 'poster' console command.
+	-- @param[opt] int postersplit The second parameter of the 'poster' console command.
+	function StartPoster(renderdef, postersize, postersplit)
+		CheckValidity(renderdef)
+		assert(tonumber(postersize), "bad argument #2 to StartPoster (number expected, got " .. type(postersize) .. ")")
+	end
+
+	hook.Add("RenderScene","HeavyLightPoster",function()
+		if not posterdata.active then return end
+
+		Render(posterdata.renderdef, true)
+		return true
+	end)
 end
-
-hook.Add("RenderScene","HeavyLight",function()
-	if not posterdata.active then return end
-
-	Render(posterdata.renderdef, true)
-	return true
-end)
