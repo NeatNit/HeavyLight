@@ -1,8 +1,7 @@
 module("heavylight", package.seeall) -- package.seeall actually sucks, but whatever
 
 assert(CLIENT, "Tried to include a client module (heavylight) in a server file!")
- -- change!
- -- change 2!
+
 do
 	local RTs = {}
 
