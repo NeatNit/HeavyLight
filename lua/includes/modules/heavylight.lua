@@ -1,19 +1,23 @@
-module("heavylight", package.seeall) -- package.seeall actually sucks, but whatever
+module("heavylight", package.seeall)
 
 assert(CLIENT, "Tried to include a client module (heavylight) in a server file!")
 
 do
 	local RTs = {}
+	local weak = {__mode = "v"}
 
 	function GetRT(rttype, index, width, height)
 		local w, h = width or ScrW(), height or ScrH()
-		RTs[rttype]       = RTs[rttype] or {}
-		RTs[rttype][w]    = RTs[rttype][w] or {}
-		RTs[rttype][w][h] = RTs[rttype][w][h] or {}
+		index = tostring(index)
+		RTs[w]            = RTs[w] or {}
+		RTs[w][h]         = RTs[w][h] or {}
+		RTs[w][h][rttype] = RTs[w][h][rttype] or setmetatable({}, weak)	-- weak table so the textures can be garbage-collected
 
-		if not RTs[rttype][w][h][index] then
-			RTs[rttype][w][h][index] = GetRenderTargetEx(
-				"HeavyLight" .. w .. "_" .. h .. "_" .. rttype .. tostring(index),	-- Name
+		local rt = RTs[w][h][rttype][index]
+
+		if not rt then
+			rt = GetRenderTargetEx(
+				"HeavyLight" .. w .. "_" .. h .. "_" .. rttype .. "_" .. index,	-- Name
 				w,	-- Width
 				h,	-- Height
 				RT_SIZE_DEFAULT,	-- Size Mode, does this even affect anything?
@@ -21,9 +25,11 @@ do
 				nil,	-- Texture Flags, shit documentation, does jack shit
 				0,	-- RT flags
 				_G["IMAGE_FORMAT_" .. rttype])	-- Image Format
+
+			RTs[w][h][rttype][index] = rt
 		end
 
-		return RTs[rttype][w][h][index]
+		return rt
 	end
 end
 
